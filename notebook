@@ -1,0 +1,152 @@
+import os
+import cv2
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras import layers, models
+from sklearn.model_selection import train_test_split
+from google.colab import drive
+from google.colab.patches import cv2_imshow
+import matplotlib.pyplot as plt
+
+## *`accéder à  mes fichiers sur google drive .`*
+
+
+
+
+
+from google.colab import drive
+drive.mount('/content/drive')
+
+
+%cd /content/drive/MyDrive/Projet_Accidents_Voiture
+
+
+# *Cloner le référentiel GitHub*
+
+!git clone https://github.com/FabriceNolack/PFE_23-24_4eme.git
+
+
+
+%ls
+
+!git clone https://github.com/FabriceNolack/PFE_23-24_4eme.git
+
+
+# Charger une image spécifique
+def load_image(image_path):
+    return cv2.imread(image_path)
+
+# Afficher une image
+def show_image(image):
+    plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    plt.axis('off')
+    plt.show()
+
+# Redimensionner une image
+def resize_image(image, size):
+    return cv2.resize(image, size)
+
+# Charger et prétraiter les images
+def load_and_preprocess_images(dataset_path, new_size):
+    images = []
+    labels = []
+    for filename in os.listdir(dataset_path):
+        if filename.endswith(".jpg") or filename.endswith(".png"):
+            image = load_image(os.path.join(dataset_path, filename))
+            resized_image = resize_image(image, new_size)
+            images.append(resized_image)
+            labels.append(1 if "accident" in filename else 0)
+    return np.array(images), np.array(labels)
+
+# Charger les données d'entraînement et de test
+train_images, train_labels = load_and_preprocess_images("/content/drive/MyDrive/Projet_Accidents_Voiture/PFE_23-24_4eme/dataset/images/", (100, 100))
+train_images, test_images, train_labels, test_labels = train_test_split(train_images, train_labels, test_size=0.2, random_state=42)
+
+
+# Charger et prétraiter les images pour la validation du modèle
+val_images, val_labels = load_and_preprocess_images("/content/drive/MyDrive/Projet_Accidents_Voiture/PFE_23-24_4eme/dataset/images/", (100, 100))
+
+
+
+
+# Créer et entraîner le modèle CNN
+def create_and_train_model(train_images, train_labels, val_images, val_labels):
+    model = models.Sequential([
+        layers.Conv2D(32, (3, 3), activation='relu', input_shape=(100, 100, 3)),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(64, (3, 3), activation='relu'),
+        layers.MaxPooling2D((2, 2)),
+        layers.Conv2D(64, (3, 3), activation='relu'),
+        layers.Flatten(),
+        layers.Dense(64, activation='relu'),
+        layers.Dense(1, activation='sigmoid')
+    ])
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    history = model.fit(train_images, train_labels, epochs=10, validation_data=(val_images, val_labels))
+    return model
+
+# Évaluer le modèle
+def evaluate_model(model, test_images, test_labels):
+    test_loss, test_accuracy = model.evaluate(test_images, test_labels)
+    print("Accuracy on test set:", test_accuracy)
+
+def detect_accident(image, model):
+    # Prétraiter l'image si nécessaire (redimensionnement, normalisation, etc.)
+    processed_image = preprocess_image(image)
+
+    # Utiliser votre modèle pour prédire s'il y a un accident dans l'image
+    prediction = model.predict(processed_image)
+
+    # Retourner la prédiction d'accident
+    return prediction
+
+# Exemple de fonction pour le prétraitement de l'image
+def preprocess_image(image):
+    # Redimensionner l'image à la taille attendue par le modèle
+    resized_image = cv2.resize(image, (100, 100))
+
+    return resized_image
+
+
+# Capture de la vidéo en continu
+def capture_video_and_detect_accidents(model):
+    cap = cv2.VideoCapture(0)  # Remplacer 0 par le chemin de votre fichier vidéo si vous utilisez un fichier
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        accident = detect_accident(frame, model)
+        if accident:
+            cv2.putText(frame, "Accident detected!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        cv2_imshow('Real-time Accident Detection', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    cap.release()
+    cv2.destroyAllWindows()
+
+# Main
+if __name__ == "__main__":
+    # Charger et afficher une image spécifique
+    image_path = "/content/drive/MyDrive/Projet_Accidents_Voiture/PFE_23-24_4eme/dataset/images/5_10_jpg.rf.5639f7a69885c595fc4b54e55dbf5148.jpg"
+    image = load_image(image_path)
+    show_image(image)
+
+    # Afficher les dimensions de l'image
+    height, width, channels = image.shape
+    print("Dimensions de l'image :", height, "x", width)
+    print("Type de l'image :", image.dtype)
+    print("Valeurs de pixel de l'image :", image)
+
+# Charger et prétraiter les images pour l'entraînement du modèle
+train_images, train_labels = load_and_preprocess_images("/content/drive/MyDrive/Projet_Accidents_Voiture/PFE_23-24_4eme/dataset/images/", (100, 100))
+
+
+# Créer et entraîner le modèle CNN
+model = create_and_train_model(train_images, train_labels, val_images, val_labels)
+
+
+# Évaluer le modèle
+evaluate_model(model, test_images, test_labels)
+
+# Capture de la vidéo en continu et détection des accidents
+capture_video_and_detect_accidents(model)
