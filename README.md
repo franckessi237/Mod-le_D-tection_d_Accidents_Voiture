@@ -57,8 +57,3 @@ The YOLO model is used to detect objects in the video. The detected objects are 
 ### Real-Time Integration
 The `main.py` script processes video frames in real-time and displays detection results with bounding boxes around the detected objects.
 
-## Contributions
-Contributions are welcome. Please open an issue to discuss significant changes.
-
-## License
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
