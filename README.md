@@ -22,15 +22,6 @@ Clone this repository:
     git clone https://github.com/franckessi237/Mod-le_D-tection_d_Accidents_Voiture.git
     cd Mod-le_D-tection_d_Accidents_Voiture
     ```
-2. Create a virtual environment and activate it:
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-    ```
-3. Install the dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
 
 ### Execution
 Before running the program, you need to run the `training_object_detection_on_custom_dataset.ipynb`. Results are saved to the `runs/detect/train3` file. Then, to run this Python program, execute the `main.py` Python file.
